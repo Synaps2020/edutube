@@ -1,0 +1,27 @@
+groups:
+  - name: edutube
+    rules:
+      - alert: ApplicationIndisponible
+        expr: up{job="edutube-app"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations: { summary: "L'application EduTube ne répond plus" }
+      - alert: FileDeTraitementBloquee
+        expr: edu_jobs_total{status="QUEUED"} > 20
+        for: 30m
+        labels: { severity: warning }
+        annotations: { summary: "Plus de 20 jobs en attente depuis 30 min : vérifier le worker" }
+      - alert: EchecsDeTranscodage
+        expr: increase(edu_jobs_total{status="FAILED"}[1h]) > 3
+        labels: { severity: warning }
+        annotations: { summary: "Plusieurs transcodages ont échoué durant la dernière heure" }
+      - alert: DisqueMediasPresquePlein
+        expr: (node_filesystem_avail_bytes{mountpoint="/host"} / node_filesystem_size_bytes{mountpoint="/host"}) < 0.10
+        for: 10m
+        labels: { severity: critical }
+        annotations: { summary: "Moins de 10 % d'espace disque disponible" }
+      - alert: PostgresIndisponible
+        expr: pg_up == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations: { summary: "PostgreSQL est injoignable" }

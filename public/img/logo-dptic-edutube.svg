@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150" role="img" aria-labelledby="title desc">
+  <title id="title">DPTIC EduTube</title>
+  <desc id="desc">Logo de la Direction de la Promotion des Technologies de l’Information et de la Communication, plateforme EduTube.</desc>
+  <g fill="none" stroke="#B8D3E3" stroke-width="7" stroke-linecap="round">
+    <path d="M54 46C88 46 91 76 122 76S163 38 202 38"/>
+    <path d="M122 76c33 0 38 39 76 39s53-17 76-41"/>
+    <path d="M122 76c12 15 10 32 1 47"/>
+  </g>
+  <g fill="#B8D3E3"><circle cx="54" cy="46" r="12"/><circle cx="202" cy="38" r="12"/><circle cx="274" cy="74" r="12"/><circle cx="123" cy="123" r="11"/></g>
+  <circle cx="122" cy="76" r="24" fill="#0099CC"/><path d="M114 62v28l22-14z" fill="white"/>
+  <text x="306" y="66" fill="#0099CC" font-family="Trebuchet MS, Arial, sans-serif" font-size="38" font-weight="700" letter-spacing="1">DPTIC</text>
+  <text x="306" y="108" fill="#FF9900" font-family="Trebuchet MS, Arial, sans-serif" font-size="35" font-weight="700">EduTube</text>
+  <text x="307" y="130" fill="#667085" font-family="Trebuchet MS, Arial, sans-serif" font-size="11" letter-spacing=".8">MÉDIAS ÉDUCATIFS NUMÉRIQUES</text>
+</svg>

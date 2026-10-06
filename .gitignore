@@ -1,0 +1,8 @@
+node_modules
+.next
+.env
+data/
+backups/
+nginx/certs/*
+!nginx/certs/README.md
+*.log
