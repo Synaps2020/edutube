@@ -1,232 +1,131 @@
-# EduTube — déploiement on-premise en une commande :
-#   cp .env.example .env   (puis éditer les secrets)
-#   docker compose up -d --build
-# Services : postgres, migrate (migrations + seed, one-shot), app (Next.js), worker (FFmpeg),
-#            nginx (reverse proxy + cache HLS + TLS), backup (sauvegardes planifiées),
-#            profil "monitoring" : prometheus, grafana, postgres-exporter, node-exporter.
 name: edutube
-
-x-app-env: &app-env
-  NODE_ENV: production
-  DATABASE_URL: postgresql://${POSTGRES_USER:-edu}:${POSTGRES_PASSWORD:?Définir POSTGRES_PASSWORD dans .env}@postgres:5432/${POSTGRES_DB:-edutube}?schema=public
-  JWT_SECRET: ${JWT_SECRET:?Définir JWT_SECRET dans .env}
-  APP_URL: ${APP_URL:-http://localhost:8081}
-  APP_NAME: ${APP_NAME:-EduTube}
-  MEDIA_ROOT: /data/media
-  MEDIA_PUBLIC_BASE: /media
-  MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-2048}
-  MAX_SUBMISSION_MB: ${MAX_SUBMISSION_MB:-500}
-  ALLOW_SELF_REGISTRATION: ${ALLOW_SELF_REGISTRATION:-true}
-  COOKIE_SECURE: ${COOKIE_SECURE:-false}
-  SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-168}
-  SSO_ENABLED: ${SSO_ENABLED:-false}
-  SSO_ISSUER: ${SSO_ISSUER:-}
-  SSO_CLIENT_ID: ${SSO_CLIENT_ID:-}
-  SSO_CLIENT_SECRET: ${SSO_CLIENT_SECRET:-}
-  SSO_REDIRECT_URI: ${SSO_REDIRECT_URI:-http://localhost:8081/api/v1/auth/sso/callback}
-  SSO_SCOPES: ${SSO_SCOPES:-openid profile email}
-  SSO_AUTO_PROVISION: ${SSO_AUTO_PROVISION:-true}
-  SSO_ADMIN_EMAILS: ${SSO_ADMIN_EMAILS:-}
-  SMTP_HOST: ${SMTP_HOST:-}
-  SMTP_PORT: ${SMTP_PORT:-587}
-  SMTP_USER: ${SMTP_USER:-}
-  SMTP_PASS: ${SMTP_PASS:-}
-  SMTP_FROM: ${SMTP_FROM:-no-reply@education.sn}
-  METRICS_TOKEN: ${METRICS_TOKEN:-}
-  SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-Passer@2026}
-  SENPROF_YOUTUBE_CHANNEL_ID: ${SENPROF_YOUTUBE_CHANNEL_ID:-}
-  SENPROF_YOUTUBE_CHANNEL_HANDLE: ${SENPROF_YOUTUBE_CHANNEL_HANDLE:-}
-
 services:
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-edutube-local}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-edutube-local-secret}
+    ports:
+      - '127.0.0.1:${MINIO_PORT:-9040}:9000'
+      - '127.0.0.1:${MINIO_CONSOLE_PORT:-9041}:9001'
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  mailpit:
+    image: axllent/mailpit:v1.29
+    ports:
+      - '127.0.0.1:${SMTP_PORT:-1026}:1025'
+      - '127.0.0.1:${MAIL_UI_PORT:-8026}:8025'
+    volumes:
+      - mail_data:/data
+    environment:
+      MP_DATABASE: /data/mailpit.db
   postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    ports:
-      - "5433:5432"
+    image: postgres:17-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-edu}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Définir POSTGRES_PASSWORD dans .env}
-      POSTGRES_DB: ${POSTGRES_DB:-edutube}
-      POSTGRES_INITDB_ARGS: "--locale=fr_FR.UTF-8 --encoding=UTF8"
-      LANG: fr_FR.UTF-8
+      POSTGRES_DB: edutube
+      POSTGRES_USER: edutube
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-edutube-local}
+    ports:
+      - '127.0.0.1:${DB_PORT:-5434}:5432'
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edu} -d ${POSTGRES_DB:-edutube}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    networks: [internal]
-
-  # Applique les migrations puis le jeu de données de démonstration (idempotent), puis s'arrête.
+      test: ['CMD-SHELL', 'pg_isready -U edutube -d edutube']
+      interval: 3s
+      timeout: 3s
+      retries: 20
   migrate:
-    build: .
-    image: edutube:latest
-    command: ["sh", "-c", "npx prisma migrate deploy && if [ \"${SEED_DEMO:-true}\" = \"true\" ]; then node node_modules/tsx/dist/cli.mjs prisma/seed.ts; fi"]
-    environment: *app-env
-    volumes:
-      - media:/data/media
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks: [internal]
-    restart: "no"
-
-  app:
-    image: edutube:latest
-    restart: unless-stopped
-    environment: *app-env
-    volumes:
-      - media:/data/media
-    depends_on:
-      postgres:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
-    expose: ["3000"]
-    networks: [internal]
-    deploy:
-      resources:
-        limits:
-          memory: ${APP_MEMORY_LIMIT:-1g}
-
-  worker:
-    image: edutube:latest
-    restart: unless-stopped
-    command: ["node", "node_modules/tsx/dist/cli.mjs", "worker/index.ts"]
+    image: redgate/flyway:13.6.0
+    platform: linux/amd64
+    command: migrate
     environment:
-      <<: *app-env
-      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
-      WORKER_POLL_MS: ${WORKER_POLL_MS:-3000}
-      FFMPEG_PRESET: ${FFMPEG_PRESET:-veryfast}
-      HLS_SEGMENT_SEC: ${HLS_SEGMENT_SEC:-6}
+      FLYWAY_URL: jdbc:postgresql://postgres:5432/edutube
+      FLYWAY_USER: edutube
+      FLYWAY_PASSWORD: ${DB_PASSWORD:-edutube-local}
+      FLYWAY_CONNECT_RETRIES: 20
+      FLYWAY_LOCATIONS: filesystem:/migrations
+      FLYWAY_CLEAN_DISABLED: 'true'
     volumes:
-      - media:/data/media
+      - ./db/migrations:/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+  seed:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ['npm', 'run', 'seed', '--workspace', '@edutube/api']
+    environment:
+      DATABASE_URL: postgresql://edutube:${DB_PASSWORD:-edutube-local}@postgres:5432/edutube
     depends_on:
       migrate:
         condition: service_completed_successfully
-    networks: [internal]
-    deploy:
-      resources:
-        limits:
-          cpus: "${WORKER_CPUS:-2}"
-          memory: ${WORKER_MEMORY_LIMIT:-2g}
-    # Mise à l'échelle : docker compose up -d --scale worker=3
-
-  nginx:
-    image: nginx:1.27-alpine
-    restart: unless-stopped
+  api:
+    user: '${APP_UID:-1000}:${APP_GID:-1000}'
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://edutube:${DB_PASSWORD:-edutube-local}@postgres:5432/edutube
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:${PORT:-3082}}
+      API_HOST: 0.0.0.0
+      API_PORT: 3083
+      NODE_ENV: production
+      STORAGE_DIR: /app/data/resources
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      VIDEO_STORAGE: ${VIDEO_STORAGE:-minio}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-edutube-local}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-edutube-local-secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-edutube-videos}
+      WEBDAV_URL: ${WEBDAV_URL:-}
+      WEBDAV_TOKEN: ${WEBDAV_TOKEN:-}
+      WEBDAV_USER: ${WEBDAV_USER:-}
+      WEBDAV_PASSWORD: ${WEBDAV_PASSWORD:-}
+      SMTP_HOST: ${SMTP_DOCKER_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_DOCKER_PORT:-1025}
+      SMTP_FROM: ${SMTP_FROM:-EduTube <bonjour@edutube.example.test>}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_REQUIRE_TLS: ${SMTP_REQUIRE_TLS:-false}
+    volumes:
+      - ./data/resources:/app/data/resources
     ports:
-      - "${HTTP_PORT:-80}:80"
-      - "${HTTPS_PORT:-443}:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/templates:ro
-      - ./nginx/tls:/etc/nginx/tls:ro
-      - ./nginx/snippets:/etc/nginx/snippets:ro
-      - ./nginx/certs:/etc/nginx/certs:ro
-      - media:/data/media:ro
-      - nginx_cache:/var/cache/nginx
-      - certbot_www:/var/www/certbot
-    environment:
-      SERVER_NAME: ${SERVER_NAME:-localhost}
-      TLS_MODE: ${TLS_MODE:-off}   # off | internal | letsencrypt
-      NGINX_ENVSUBST_TEMPLATE_SUFFIX: .template
-    depends_on: [app]
-    networks: [internal]
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/nginx-health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-
-  # Sauvegardes quotidiennes (base + médias) dans ./backups, rétention configurable.
-  backup:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      PGHOST: postgres
-      PGUSER: ${POSTGRES_USER:-edu}
-      PGPASSWORD: ${POSTGRES_PASSWORD:?Définir POSTGRES_PASSWORD dans .env}
-      PGDATABASE: ${POSTGRES_DB:-edutube}
-      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
-      BACKUP_HOUR: ${BACKUP_HOUR:-02}
-    volumes:
-      - ./scripts/backup.sh:/backup.sh:ro
-      - ./backups:/backups
-      - media:/data/media:ro
-    entrypoint: ["sh", "-c", "apk add --no-cache tar >/dev/null; while true; do if [ \"$(date +%H)\" = \"$$BACKUP_HOUR\" ]; then sh /backup.sh; sleep 3600; fi; sleep 300; done"]
+      - '127.0.0.1:3083:3083'
     depends_on:
-      postgres:
+      minio:
         condition: service_healthy
-    networks: [internal]
-
-  # ---------------------------------------------------------------- monitoring (optionnel)
-  prometheus:
-    image: prom/prometheus:v2.54.1
-    profiles: [monitoring]
+      mailpit:
+        condition: service_started
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3083/health').then(response=>process.exit(response.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  web:
+    build: .
+    ports:
+      - '${HOST:-127.0.0.1}:${PORT:-3082}:8080'
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
-      - prometheus_data:/prometheus
-    environment:
-      METRICS_TOKEN: ${METRICS_TOKEN:-}
-    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=30d"]
-    networks: [internal]
-    expose: ["9090"]
-
-  grafana:
-    image: grafana/grafana:11.2.0
-    profiles: [monitoring]
-    restart: unless-stopped
-    environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-changez-moi}
-      GF_SERVER_ROOT_URL: ${APP_URL:-http://localhost:8081}/grafana/
-      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
-      GF_USERS_ALLOW_SIGN_UP: "false"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-    networks: [internal]
-    expose: ["3000"]
-
-  postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:v0.15.0
-    profiles: [monitoring]
-    restart: unless-stopped
-    environment:
-      DATA_SOURCE_NAME: postgresql://${POSTGRES_USER:-edu}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-edutube}?sslmode=disable
-    networks: [internal]
-
-  node-exporter:
-    image: prom/node-exporter:v1.8.2
-    profiles: [monitoring]
-    restart: unless-stopped
-    pid: host
-    volumes:
-      - /:/host:ro,rslave
-    command: ["--path.rootfs=/host"]
-    networks: [internal]
-
-  # Renouvellement Let's Encrypt (TLS_MODE=letsencrypt) — voir docs/DEPLOIEMENT.md
-  certbot:
-    image: certbot/certbot:v2.11.0
-    profiles: [letsencrypt]
-    volumes:
-      - ./nginx/certs:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    entrypoint: ["sh", "-c", "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done"]
-
 volumes:
-  pgdata:
-  media:
-  nginx_cache:
-  certbot_www:
-  prometheus_data:
-  grafana_data:
-
-networks:
-  internal:
-    driver: bridge
+  minio_data:
+  mail_data:
+  postgres_data:

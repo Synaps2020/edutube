@@ -1,9 +1,0 @@
-# Rendu par envsubst : ${SERVER_NAME}, ${TLS_MODE} (off | internal | letsencrypt)
-server {
-  listen 80;
-  listen [::]:80;
-  server_name ${SERVER_NAME};
-  location = /nginx-health { access_log off; return 200 "ok\n"; }
-  include /etc/nginx/tls/${TLS_MODE}-http.conf;
-}
-include /etc/nginx/tls/${TLS_MODE}-https.conf;

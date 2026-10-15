@@ -1,0 +1,28 @@
+{
+  "name": "@edutube/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./resources": "./src/resources.ts",
+    "./teaching": "./src/teaching.ts",
+    "./operations": "./src/operations.ts",
+    "./domain-model": "./src/domain-model.ts",
+    "./identity": "./src/identity.ts",
+    "./videos": "./src/videos.ts",
+    "./administration": "./src/administration.ts"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "openapi": "tsx scripts/generate-openapi.ts"
+  },
+  "devDependencies": {
+    "typescript": "~5.7.3",
+    "tsx": "^4.20.6",
+    "zod-to-json-schema": "^3.25.1"
+  }
+}

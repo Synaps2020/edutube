@@ -1,7 +1,10 @@
-node_modules
-.next
 .git
-data
+node_modules
+**/node_modules
+**/dist
 docs
-*.md
-.env
+.env*
+*.log
+data
+**/data
+backups

@@ -1,61 +1,41 @@
 {
   "name": "edutube",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Plateforme souveraine de contenus pédagogiques vidéo et audio — Ministère de l'Éducation nationale du Sénégal",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsgo --noEmit",
-    "worker": "tsx worker/index.ts",
-    "worker:dev": "tsx watch worker/index.ts",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate deploy",
-    "db:migrate:dev": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
-  "dependencies": {
-    "@prisma/client": "5.22.0",
-    "bcryptjs": "2.4.3",
-    "busboy": "^1.6.0",
-    "hls.js": "1.5.17",
-    "jose": "5.9.6",
-    "next": "14.2.18",
-    "nodemailer": "^6.9.16",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "server-only": "^0.0.1",
-    "wavesurfer.js": "7.8.8",
-    "zod": "3.23.8"
-  },
-  "devDependencies": {
-    "@types/bcryptjs": "2.4.6",
-    "@types/busboy": "^1.5.4",
-    "@types/node": "20.17.6",
-    "@types/nodemailer": "^6.4.17",
-    "@types/react": "18.3.12",
-    "@types/react-dom": "18.3.1",
-    "autoprefixer": "10.4.20",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.18",
-    "postcss": "8.4.49",
-    "prisma": "5.22.0",
-    "tailwindcss": "3.4.15",
-    "tsx": "4.19.2",
-    "@typescript/native-preview": "latest",
-    "typescript": "6"
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && npm run test:scripts",
+    "format": "prettier --write eslint.config.mjs apps/web/src packages/contracts/src packages/contracts/scripts apps/web/vite.config.ts docs/ARCHITECTURE.md docs/API-DESIGN.md README.md .prettierrc.json docker-compose.yml apps/api/src apps/api/scripts apps/api/test scripts docs/SERVER.md docs/VIDEO.md",
+    "format:check": "prettier --check eslint.config.mjs apps/web/src packages/contracts/src packages/contracts/scripts apps/web/vite.config.ts docs/ARCHITECTURE.md docs/API-DESIGN.md README.md .prettierrc.json docker-compose.yml apps/api/src apps/api/scripts apps/api/test scripts docs/SERVER.md docs/VIDEO.md",
+    "preview": "npm run preview --workspace @edutube/web --",
+    "api:spec": "npm run openapi --workspace @edutube/contracts",
+    "lint": "eslint apps/web apps/api packages/contracts scripts --max-warnings 0",
+    "lint:fix": "npm run lint -- --fix",
+    "verify:runtime": "node scripts/verify-runtime.mjs",
+    "test:integration": "npm run test:integration --workspace @edutube/api",
+    "test:unit": "npm run test:unit --workspace @edutube/api && npm run test --workspace @edutube/web && npm run test:scripts",
+    "test:scripts": "node --test scripts/project.test.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19"
   },
-  "optionalDependencies": {
-    "@emnapi/core": "1.11.3",
-    "@emnapi/runtime": "1.11.3"
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "light-my-request": "6.6.0",
+    "prettier": "^3.9.10",
+    "typescript-eslint": "^8.71.2"
+  },
+  "overrides": {
+    "light-my-request": "6.6.0"
   }
 }

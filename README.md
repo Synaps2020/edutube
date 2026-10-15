@@ -1,120 +1,154 @@
 # EduTube
 
-Plateforme officielle, souveraine et modérée, de gestion et de diffusion de contenus pédagogiques **vidéo et audio** du **Ministère de l'Éducation nationale de la République du Sénégal** (opérée par le SIMEN). Destinée aux élèves et enseignants des cycles Primaire (CI → CM2), Moyen (6e → 3e) et Secondaire (Seconde → Terminale).
+Plateforme d’apprentissage : interface React, serveur Node, PostgreSQL et stockage vidéo privé. Les cours, comptes, inscriptions, notes, quiz et progressions passent par le serveur. Les vidéos sont préparées en HLS et stockées dans MinIO.
 
-Prototype fonctionnel, déployable on-premise en une commande. Identité visuelle conforme à la charte graphique du SIMEN (bleu `#0099CC`, orange `#FF9900`, gris, typographie Trebuchet MS ; logotype sur fond blanc, jamais déformé), couleurs nationales en accent discret.
+## Prérequis
 
-## Sommaire
+- Node.js **22.12+** ou une version LTS plus récente ; Node 20.19+ reste compatible.
+- npm, fourni avec Node.
+- Docker avec **Compose v2**, démarré.
+- Make : macOS ou Linux ; sous Windows, utiliser **WSL2** avec Docker Desktop intégré.
 
-- [Fonctionnalités](#fonctionnalités)
-- [Architecture](#architecture)
-- [Démarrage rapide — production (Docker)](#démarrage-rapide--production-docker)
-- [Démarrage rapide — développement](#démarrage-rapide--développement)
-- [Comptes de démonstration](#comptes-de-démonstration)
-- [Structure du dépôt](#structure-du-dépôt)
-- [Documentation](#documentation)
+Le premier lancement nécessite Internet pour les dépendances et les images Docker. Toutes les commandes ci-dessous se lancent à la racine du dépôt.
 
-## Fonctionnalités
+## Installer et démarrer
 
-| Domaine | Contenu |
-|---|---|
-| Rôles | Administrateur (MEN) · Enseignant · Élève · Visiteur. **Seuls les administrateurs publient** ; enseignants et élèves proposent (workflow de validation, retour motivé). |
-| Catalogue | Double clé thématique × discipline ; filtres cycle, classe, niveau, langue (FR/WO/AR/EN), durée, date ; tri ; recherche plein texte PostgreSQL (titre, description, mots-clés, transcription, insensible aux accents, tolérante aux fautes) + suggestions. |
-| Lecteur vidéo | HLS adaptatif (240p/480p/720p/1080p bornés par la source, hls.js / natif Safari), reprise de lecture, sous-titres WebVTT, vitesse, qualité, plein écran, raccourcis clavier, mode connexion limitée. |
-| Lecteur audio | Forme d'onde (pics précalculés), vitesse, écoute en arrière-plan (Media Session), téléchargement optionnel, transcription. |
-| Téléversement admin | Métadonnées pédagogiques obligatoires, miniature, sous-titres, transcodage HLS (FFmpeg, worker séparé), normalisation loudness EBU R128, miniature et forme d'onde générées. Téléversement en flux (busboy) jusqu'à 2 Go. |
-| Propositions | Formulaire simplifié (fichier ou lien), quota, statut « En attente », notification admins, approbation → média publié automatiquement (contributeur crédité) ou rejet motivé. |
-| Modération | File de validation, signalements (contenus/commentaires), masquage, archivage, historique des décisions, journal d'audit. |
-| Communauté | J'aime, commentaires (réponses, modération), partage par lien et **code court**, recommandation privée ou **diffusion à une classe**, favoris, listes de lecture publiques/privées, abonnements aux chaînes. |
-| Suivi | Historique, reprise, progression, statistiques individuelles, tableau de bord d'audience admin, export CSV. |
-| Admin | Utilisateurs, cycles/classes/disciplines/thématiques, chaînes, quotas, paramètres, file de traitement, métriques Prometheus. |
-| Transverse | Interface FR (WO/AR en option, RTL), accessibilité (clavier, focus, ARIA, contrastes), sécurité (bcrypt, JWT httpOnly, CSRF, rate limiting, CSP/HSTS), sauvegardes, monitoring. |
-
-## Architecture
-
-```
-Navigateur ──HTTPS──► Nginx (TLS, cache HLS, rate-limit, en-têtes) ──► Next.js 14 (pages + API REST /api/v1)
-                           │                                                │
-                           └──► /media/* (HLS, audio, miniatures)           └──► PostgreSQL 16 (Prisma)
-                                      ▲                                              ▲
-                                      └──── Worker FFmpeg (file de jobs en base, SKIP LOCKED) ┘
+```sh
+make config     # Créer .env sans écraser votre configuration
+make doctor     # Vérifier les outils et Docker
+make setup      # Installer, migrer la base et créer les comptes de test
+make dev        # Démarrer React, Node et leurs services
 ```
 
-- **Next.js 14 (App Router) + TypeScript + Tailwind** : interface et API dans une même application (Route Handlers) ; l'API reste indépendante et documentée (`docs/API.md`).
-- **PostgreSQL + Prisma** : schéma `prisma/schema.prisma`, migrations SQL, seed.
-- **Worker FFmpeg** (`worker/index.ts`) : même image Docker, commande différente ; file de jobs stockée en base (pas de Redis à opérer) ; `--scale worker=N` pour paralléliser.
-- **Stockage** : volume local `/data/media` (abstraction `src/lib/storage.ts`, évolutive vers MinIO/S3).
-- **Nginx** : TLS (certificat interne ou Let's Encrypt), cache HLS, limitation de débit, CSP/HSTS.
+Pour tout préparer et démarrer en une commande :
 
-## Démarrage rapide — production (Docker)
-
-Prérequis : Docker Engine ≥ 24 et Docker Compose v2 (voir `docs/DEPLOIEMENT.md` pour l'installation serveur).
-
-```bash
-git clone <dépôt> edutube && cd edutube
-cp .env.example .env
-# Éditer .env : POSTGRES_PASSWORD, JWT_SECRET (openssl rand -base64 48), APP_URL, SERVER_NAME, SEED_DEMO_PASSWORD
-docker compose up -d --build
+```sh
+make start
 ```
 
-Au premier lancement : construction de l'image, démarrage de PostgreSQL, migrations + jeu de données de démonstration (`migrate`), puis `app`, `worker`, `nginx`, `backup`. Les médias de démonstration sont transcodés par le worker en 1 à 3 minutes.
+Ouvrir **[http://localhost:3082](http://localhost:3082)**. Garder le terminal ouvert. `Ctrl+C` arrête React et Node ; `make stop` arrête les services Docker. Les données sont conservées.
 
-- Plateforme : http://localhost (ou `APP_URL`)
-- État : http://localhost/api/v1/health
-- Journaux : `docker compose logs -f app worker`
-- Monitoring (optionnel) : `docker compose --profile monitoring up -d` → Grafana sur `/grafana/`
-- HTTPS : `sh scripts/init-letsencrypt.sh medias.education.sn admin@education.sn` ou certificat interne (`TLS_MODE=internal`, voir `nginx/certs/README.md`)
+Pour les lancements suivants, **`make dev` suffit**. `make setup` peut être relancé : les migrations appliquées, comptes existants et mots de passe modifiés sont conservés.
 
-Après le premier lancement en production, positionner `SEED_DEMO=false` et changer les mots de passe de démonstration (ou supprimer les comptes de démonstration).
+## Adresses locales
 
-## Démarrage rapide — développement
+| Service    | Adresse                                               | Usage                                               |
+| ---------- | ----------------------------------------------------- | --------------------------------------------------- |
+| EduTube    | [localhost:3082](http://localhost:3082)               | Interface et accès HTTP `/api/v1`                   |
+| Node       | [localhost:3083/health](http://localhost:3083/health) | État du serveur et de sa connexion à la base        |
+| PostgreSQL | `127.0.0.1:5434`                                      | Base `edutube`, utilisateur `edutube`               |
+| Mailpit    | [localhost:8026](http://localhost:8026)               | E-mails de vérification, récupération et invitation |
+| MinIO      | [localhost:9041](http://localhost:9041)               | Console du stockage vidéo ; API sur `9040`          |
 
-Prérequis : Node.js ≥ 20, PostgreSQL ≥ 14 (extensions `pg_trgm`, `unaccent` — incluses dans la distribution standard), FFmpeg.
+Les identifiants PostgreSQL et MinIO de développement sont dans `.env`. Ce fichier reste ignoré par Git. Les valeurs fournies sont destinées au développement local.
 
-```bash
-npm install
-cp .env.example .env
-# DATABASE_URL=postgresql://edu:mot-de-passe@localhost:5433/edutube?schema=public  MEDIA_ROOT=./data/media  APP_URL=http://localhost:8081
-npx prisma migrate deploy      # crée le schéma
-npm run db:seed                # référentiels + comptes + médias de démo (génère des fichiers de test avec FFmpeg)
-npm run worker                 # terminal 1 : worker de transcodage
-npm run dev -- -p 8081         # terminal 2 : http://localhost:8081
+## Comptes de test
+
+`make setup` crée ces comptes. Leur mot de passe initial commun est **`EduTube-Test2026!`**.
+
+| Adresse                   | Rôle                | Accès principal                                       |
+| ------------------------- | ------------------- | ----------------------------------------------------- |
+| `eleve@edutube.test`      | Apprenant           | Cours suivis, progression, favoris, notes et quiz     |
+| `nouveau@edutube.test`    | Apprenant           | Vérification d’adresse et parcours débutant           |
+| `enseignant@edutube.test` | Enseignant          | Création et gestion de ses cours                      |
+| `admin@edutube.test`      | Enseignant référent | Gestion des cours qui lui sont confiés                |
+| `superadmin@edutube.test` | Super-admin         | Comptes, rôles, modération et journal complet         |
+| `regulateur@edutube.test` | Régulateur          | Contrôle des contenus et journal de ses interventions |
+
+L’ancien rôle `ADMIN` correspond à l’enseignant référent, pas au super-admin. Le compte `nouveau` possède une adresse non vérifiée ; consulter Mailpit pour terminer sa vérification. `make demo` ajoute les exemples manquants sans réinitialiser les mots de passe.
+
+## Essayer les vidéos
+
+Avec `make dev` actif, ouvrir un second terminal :
+
+```sh
+make videos-demo
 ```
 
-Commandes utiles : `npm run typecheck`, `npm run lint`, `npm run build`, `npm run db:studio`.
+Cette commande télécharge des extraits de démonstration, crée un cours, dépose les vidéos par HTTP, attend leur préparation puis publie le cours. Elle affiche son adresse et conserve son identifiant dans `data/demo-videos/course.json`. Elle exige `curl` et `unzip` ; FFmpeg est fourni par les dépendances npm. Prévoir quelques minutes au premier lancement.
 
-## Comptes de démonstration
+Utiliser le compte enseignant pour gérer les vidéos et `nouveau@edutube.test` pour essayer le verrouillage par examen. La lecture hors connexion n’est pas implémentée. Voir [le fonctionnement vidéo](docs/VIDEO.md).
 
-Mot de passe commun : `Passer@2026` (variable `SEED_DEMO_PASSWORD`).
+## Commandes du quotidien
 
-| Rôle | E-mail |
-|---|---|
-| Administrateur | admin@education.sn · moderation@education.sn |
-| Enseignant | enseignant@education.sn (Lycée Blaise Diagne) · enseignante@education.sn (CM2, Guédiawaye) |
-| Élève | eleve@education.sn (3e, Thiès) · eleve2@education.sn (3e) · eleve3@education.sn (Tle, Ziguinchor) · eleve4@education.sn (CM2) |
+| Commande              | Effet                                                                         |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `make help`           | Afficher toutes les commandes                                                 |
+| `make config`         | Créer `.env` et `data/resources`, conserver l’existant                        |
+| `make doctor`         | Vérifier les outils, Docker et la configuration Compose                       |
+| `make setup`          | Installer les dépendances, préparer la base et les comptes de test            |
+| `make dev`            | Relancer le développement                                                     |
+| `make services`       | Démarrer PostgreSQL, MinIO et Mailpit seulement                               |
+| `make migrate`        | Appliquer les nouvelles migrations                                            |
+| `make migrate-check`  | Valider les migrations appliquées                                             |
+| `make seed`           | Compléter le catalogue d’exemple                                              |
+| `make demo`           | Compléter les comptes et données de test                                      |
+| `make status`         | Afficher les services Docker                                                  |
+| `make logs`           | Suivre les journaux Docker ; React et Node locaux écrivent dans leur terminal |
+| `make stop`           | Arrêter les services Docker, sans effacer les données                         |
+| `make check`          | Linter, types, tests unitaires, formatage et compilation                      |
+| `make integration`    | Tester le serveur avec PostgreSQL                                             |
+| `make verify-runtime` | Vérifier les services démarrés et comparer leurs réponses à la base           |
+| `make api-spec`       | Régénérer la spécification HTTP                                               |
 
-Le seed crée 13 classes (CI → Terminale), 13 disciplines, 9 thématiques, 3 chaînes, 11 médias dans divers statuts (publiés, brouillon, archivé, rejeté), 4 propositions (en attente, approuvée, rejetée), commentaires (dont un masqué), signalements, recommandations, listes, historique et 30 jours d'événements de vue.
+Pour vérifier les services démarrés, préparer aussi le cours vidéo de démonstration puis lancer :
 
-## Structure du dépôt
-
+```sh
+TEST_PASSWORD='EduTube-Test2026!' make verify-runtime
 ```
-├─ prisma/            schéma, migrations (0001_init, 0002_fulltext), seed.ts
-├─ src/app/           pages (App Router) et API REST (src/app/api/v1/**)
-├─ src/components/    lecteurs, catalogue, formulaires, interface
-├─ src/lib/           auth, api, validation (zod), média, stockage, upload, i18n, audit, notifications, mail
-├─ worker/            worker FFmpeg (HLS, loudnorm, waveform, miniatures)
-├─ nginx/             reverse proxy, TLS, cache, snippets
-├─ monitoring/        Prometheus, alertes, Grafana (provisioning)
-├─ scripts/           backup.sh, restore.sh, gen-self-signed.sh, init-letsencrypt.sh
-├─ docs/              DEPLOIEMENT.md, MODERATION.md, CHARTE.md, API.md
-├─ Dockerfile, docker-compose.yml, .env.example
+
+Utiliser le mot de passe actuel si les comptes ont été modifiés. Les connexions répétées trop vite peuvent déclencher leur limitation de sécurité. Les contrôles sont détaillés dans [le guide serveur](docs/SERVER.md#vérifications).
+
+## Configuration
+
+Modifier **`.env`**, puis redémarrer le projet. Toutes les commandes Make le chargent. Les variables du terminal priment sur ce fichier. Pour changer temporairement le port du front :
+
+```sh
+make dev PORT=3100
 ```
 
-## Documentation
+Si `WEB_ORIGIN` est absent, il suit automatiquement ce port. S’il est renseigné dans votre `.env`, le mettre à jour aussi. Pour accéder depuis une autre machine, renseigner `HOST=0.0.0.0` et `WEB_ORIGIN` avec l’adresse exacte du navigateur.
 
-- `docs/DEPLOIEMENT.md` — guide de déploiement on-premise (prérequis, Docker, HTTPS, sauvegardes, monitoring, mise à l'échelle : workers, MinIO, CDN régional).
-- `docs/MODERATION.md` — guide de modération (workflow, critères, délais, sanctions, journalisation).
-- `docs/CHARTE.md` — charte communautaire type (également affichée sur `/charte`).
-- `docs/API.md` — référence de l'API REST.
+`DATABASE_URL` est calculé depuis `DB_PORT` et `DB_PASSWORD` quand il n’est pas renseigné. Après modification du port PostgreSQL ou du mot de passe, vérifier qu’un éventuel `DATABASE_URL` explicite correspond toujours. Modifier `DB_PASSWORD` ne change pas le mot de passe d’un volume PostgreSQL déjà initialisé.
 
-Licence du code : à définir par le Ministère (recommandation : licence libre, p. ex. AGPL-3.0 ou EUPL-1.2). Les contenus pédagogiques sont publiés sous la licence indiquée sur chaque fiche (CC BY-NC-SA 4.0 par défaut).
+Voir [les variables et le dépannage](docs/SERVER.md).
+
+## Tout lancer dans Docker
+
+Alternative au lancement local, avec les mêmes ports : arrêter d’abord React et Node locaux.
+
+```sh
+make config
+make docker-up
+make demo
+```
+
+`make demo` nécessite les dépendances npm : lancer `make install` si elles ne sont pas présentes. Les comptes de démonstration sont facultatifs dans ce mode ; le catalogue est chargé automatiquement. `make videos-demo` utilise aussi les dépendances locales.
+
+`make docker-up` construit les images, applique Flyway, charge le catalogue puis démarre Node et le front Nginx. `make docker-down` retire les conteneurs sans supprimer les volumes. Les identifiants de stockage et les adresses internes des conteneurs sont gérés par Compose.
+
+## Organisation du code
+
+```text
+apps/web/src/          Interface React, logique de présentation et services HTTP
+apps/api/src/domain/  Règles métier
+apps/api/src/application/  Cas d’usage et interfaces des dépendances
+apps/api/src/adapters/     HTTP, PostgreSQL, stockage, sécurité et messagerie
+packages/contracts/   Schémas de données et opérations HTTP partagés
+db/migrations/        Migrations Flyway ; ne pas modifier une migration appliquée
+db/fixtures/          Catalogue d’exemple
+scripts/              Lancement et vérification du projet
+infra/                Proxy Nginx
+```
+
+Les commentaires sont en français. Les noms sont explicites et courts. ESLint, TypeScript et Prettier contrôlent la qualité du code ; `make format` applique le formatage.
+
+Les données persistantes sont dans les volumes Docker `postgres_data`, `minio_data`, `mail_data` et dans `data/resources`. Les fichiers temporaires et les extraits de démonstration restent dans `data/`. Une sauvegarde complète doit inclure la base, les documents et le stockage vidéo.
+
+## Documentation technique
+
+- [Architecture et règles métier](docs/ARCHITECTURE.md)
+- [Configuration, vérifications et dépannage](docs/SERVER.md)
+- [Modèles et conventions HTTP](docs/API-DESIGN.md)
+- [Lecture vidéo et changement de stockage](docs/VIDEO.md)
+- [Spécification OpenAPI](docs/openapi.json), générée depuis les contrats

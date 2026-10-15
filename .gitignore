@@ -6,3 +6,7 @@ backups/
 nginx/certs/*
 !nginx/certs/README.md
 *.log
+
+dist/
+coverage/
+*.tsbuildinfo

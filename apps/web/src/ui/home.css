@@ -1,0 +1,776 @@
+/* Les grands encarts utilisent le même composant. */
+.home-page {
+  --campaign-ink: #072d40;
+}
+.campaign-wrap {
+  padding-top: 28px;
+}
+.editorial-banner {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  overflow: hidden;
+  position: relative;
+}
+.editorial-blue {
+  background: #007fa9;
+  min-height: 490px;
+  color: #fff;
+}
+.editorial-copy {
+  padding: 48px 44px;
+  position: relative;
+  z-index: 2;
+}
+.editorial-kicker {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 24px;
+}
+.editorial-copy h1 {
+  font-size: clamp(40px, 4.3vw, 64px);
+  letter-spacing: -2.7px;
+  line-height: 1.02;
+  font-weight: 800;
+}
+.orange-period {
+  color: #ffad25;
+}
+.editorial-copy > p {
+  max-width: 360px;
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 26px 0;
+}
+.editorial-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.editorial-blue .button {
+  background: #ff9900;
+  border-color: #ff9900;
+  color: #173243;
+}
+.editorial-blue .button:hover {
+  background: #ffb23f;
+}
+.editorial-blue .button-secondary {
+  background: transparent;
+  border-color: #b4e0ed;
+  color: white;
+}
+.editorial-blue .button-secondary:hover {
+  background: #00698c;
+}
+.editorial-visual {
+  position: relative;
+  min-width: 0;
+}
+.campaign-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 65% center;
+  position: absolute;
+  inset: 0;
+}
+.campaign-stamp {
+  position: absolute;
+  left: -26px;
+  top: 30px;
+  background: #ffb12e;
+  color: #12374a;
+  padding: 18px 24px;
+  transform: rotate(-7deg);
+  box-shadow: 6px 6px 0 #072d40;
+}
+.campaign-stamp > span {
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  font-weight: 800;
+}
+.campaign-stamp strong {
+  font-family: 'Manrope', sans-serif;
+  font-size: 27px;
+  line-height: 1;
+  display: block;
+  margin: 9px 0;
+  letter-spacing: -1px;
+}
+.campaign-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #072d40;
+  color: #d6edf5;
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+}
+.home-beliefs {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 23px;
+  padding-bottom: 23px;
+  border-bottom: 1px solid #d9e1de;
+}
+.home-beliefs span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #46626c;
+}
+.home-beliefs svg {
+  color: #007b9f;
+}
+.discovery-section {
+  display: grid;
+  grid-template-columns: 205px 1fr;
+  gap: 30px;
+  padding-top: 48px;
+  padding-bottom: 8px;
+}
+.discovery-intro {
+  padding-top: 12px;
+}
+.discovery-intro h2 {
+  font-size: 31px;
+  line-height: 1.15;
+}
+.discovery-intro > p {
+  font-size: 12px;
+  color: #60757b;
+  margin: 18px 0;
+}
+.discovery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.discovery-card {
+  position: relative;
+  background: #cfe5ed;
+  padding: 14px;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+.discovery-card:hover {
+  transform: translateY(-5px);
+}
+.discovery-green {
+  background: #d2dfbe;
+}
+.discovery-orange {
+  background: #ffca82;
+}
+.discovery-purple {
+  background: #d2c9dc;
+}
+.discovery-number {
+  position: relative;
+  z-index: 1;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #173243;
+}
+.discovery-card .course-art {
+  height: 130px;
+  background: transparent;
+  margin: 0 -10px;
+}
+.discovery-card .art-grid,
+.discovery-card .art-label {
+  display: none;
+}
+.discovery-card .course-art > svg {
+  stroke-width: 3;
+}
+.discovery-card .code-art {
+  font-size: 10px;
+  padding: 32px 10px;
+}
+.discovery-title {
+  padding: 12px 10px;
+  background: #fffaf3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+}
+.discovery-title h3 {
+  font-size: 11px;
+  letter-spacing: -0.2px;
+}
+.discovery-title svg {
+  width: 16px;
+}
+.discovery-card > p {
+  color: #304c58;
+  font-size: 9px;
+  margin: 10px 0 0;
+  line-height: 1.5;
+}
+.home-course-section {
+  padding-top: 45px;
+}
+.home-page .course-card {
+  border-radius: 3px;
+  border-color: #d6dfdf;
+}
+.home-page .card-image .course-art {
+  height: 170px;
+}
+.home-page .card-body {
+  background: #fffdf8;
+}
+.home-page .card-body h3 {
+  font-size: 16px;
+  min-height: 45px;
+}
+.home-page .card-arrow {
+  border-radius: 2px;
+}
+.ambition-wrap {
+  padding-top: 60px;
+}
+.editorial-dark {
+  background: #102d3a;
+  color: #fffdf5;
+  min-height: 355px;
+}
+.editorial-dark .editorial-copy {
+  padding: 44px;
+}
+.editorial-dark .editorial-kicker {
+  color: #92d3e7;
+  font-size: 9px;
+}
+.editorial-dark h2 {
+  font-size: 38px;
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+}
+.editorial-dark h2 em {
+  color: #ffb142;
+  font-style: normal;
+}
+.editorial-dark p {
+  color: #c3d7dc;
+  font-size: 13px;
+  max-width: 375px;
+}
+.editorial-dark .button {
+  background: #fff9ed;
+  border-color: #fff9ed;
+  color: #173243;
+}
+.editorial-dark .button:hover {
+  background: #ffe2af;
+}
+.ambition-collage {
+  display: grid;
+  grid-template-columns: 0.85fr 1.1fr 0.85fr;
+  gap: 10px;
+  height: 100%;
+  padding: 43px 30px 43px 0;
+}
+.ambition-slab {
+  min-width: 0;
+  padding: 18px 13px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 60px 60px 2px 2px;
+  position: relative;
+  overflow: hidden;
+}
+.ambition-slab b {
+  font-size: 8px;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 1;
+}
+.slab-blue {
+  background: #0099cc;
+  color: #073549;
+}
+.slab-blue > span {
+  font:
+    45px 'Manrope',
+    sans-serif;
+  font-weight: 800;
+}
+.slab-blue > svg {
+  width: 100%;
+}
+.slab-photo {
+  background: #246578;
+  padding: 0;
+  border-radius: 2px;
+  margin-top: 25px;
+  margin-bottom: -20px;
+}
+.slab-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 65% center;
+}
+.slab-photo b {
+  background: #082d40;
+  color: white;
+  padding: 13px;
+  margin-top: auto;
+}
+.slab-orange {
+  background: #ff9900;
+  color: #173243;
+  border-radius: 2px 2px 60px 60px;
+}
+.slab-orange > span {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+.orbit-symbol {
+  height: 100px;
+  width: 65px;
+  margin: auto;
+  border: 12px solid #173243;
+  border-radius: 50%;
+  transform: rotate(35deg);
+  position: relative;
+}
+.orbit-symbol:after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border: 12px solid #173243;
+  border-radius: 50%;
+  transform: rotate(90deg);
+}
+.ambition-benefits {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 23px;
+  background: #dfebed;
+  color: #294c59;
+}
+.ambition-benefits > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+}
+.audience-section {
+  padding-top: 55px;
+  padding-bottom: 55px;
+}
+.audience-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+.audience-card {
+  display: block;
+  padding: 30px;
+  border-top: 5px solid #ff9900;
+  background: #eee8db;
+  position: relative;
+}
+.audience-path {
+  background: #daeaf0;
+  border-top-color: #0099cc;
+}
+.audience-card h3 {
+  font-size: 25px;
+  letter-spacing: -0.8px;
+}
+.audience-card p {
+  max-width: 390px;
+  font-size: 12px;
+  color: #526873;
+  margin: 18px 0 25px;
+}
+.audience-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 12px;
+  border-top: 1px solid #17324320;
+  padding-top: 18px;
+}
+.audience-card:hover .audience-action {
+  color: #006c91;
+}
+.manifesto {
+  background: #ffb02e;
+}
+.manifesto-inner {
+  display: grid;
+  grid-template-columns: 0.7fr 1fr;
+  gap: 80px;
+  padding-top: 55px;
+  padding-bottom: 55px;
+  align-items: center;
+}
+.manifesto-mark {
+  font:
+    150px 'Manrope',
+    sans-serif;
+  font-weight: 800;
+  letter-spacing: -20px;
+  color: #173243;
+  text-align: center;
+  white-space: nowrap;
+}
+.manifesto-mark > span {
+  color: #fff5db;
+  display: inline-block;
+  transform: rotate(-30deg);
+}
+.manifesto .eyebrow {
+  color: #5e431b;
+}
+.manifesto h2 {
+  font-size: 36px;
+  line-height: 1.12;
+}
+.manifesto p {
+  max-width: 500px;
+  font-size: 13px;
+  color: #493e2b;
+  margin: 20px 0;
+}
+.manifesto .text-link {
+  color: #173243;
+}
+.home-page + footer {
+  margin-top: 0;
+}
+@media (max-width: 1100px) {
+  .editorial-copy {
+    padding: 38px 30px;
+  }
+  .editorial-copy h1 {
+    font-size: 51px;
+  }
+  .editorial-actions .button {
+    font-size: 11px;
+    padding: 12px 15px;
+  }
+  .discovery-section {
+    grid-template-columns: 170px 1fr;
+    gap: 20px;
+  }
+  .discovery-grid {
+    gap: 9px;
+  }
+  .discovery-card {
+    padding: 10px;
+  }
+  .discovery-title {
+    padding: 10px 6px;
+  }
+  .discovery-title h3 {
+    font-size: 10px;
+  }
+  .editorial-dark .editorial-copy {
+    padding: 35px 30px;
+  }
+  .editorial-dark h2 {
+    font-size: 34px;
+  }
+  .ambition-collage {
+    padding-right: 20px;
+  }
+  .ambition-slab {
+    padding: 18px 9px;
+  }
+  .slab-photo {
+    padding: 0;
+  }
+}
+@media (max-width: 800px) {
+  .editorial-banner {
+    grid-template-columns: 1fr 1fr;
+  }
+  .editorial-blue {
+    min-height: 445px;
+  }
+  .editorial-copy h1 {
+    font-size: 41px;
+    letter-spacing: -1.7px;
+  }
+  .editorial-copy > p {
+    font-size: 12px;
+  }
+  .editorial-copy {
+    padding: 32px 25px;
+  }
+  .campaign-stamp {
+    top: 25px;
+    left: -15px;
+    padding: 14px;
+  }
+  .campaign-stamp strong {
+    font-size: 23px;
+  }
+  .campaign-caption {
+    font-size: 6px;
+    padding: 13px 10px;
+  }
+  .home-beliefs {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+  }
+  .home-beliefs span {
+    font-size: 10px;
+  }
+  .discovery-section {
+    grid-template-columns: 1fr;
+  }
+  .discovery-intro h2 br {
+    display: none;
+  }
+  .discovery-intro {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+  .discovery-intro .eyebrow {
+    grid-column: span 2;
+  }
+  .discovery-intro p {
+    grid-column: 1;
+    margin: 10px 0;
+  }
+  .discovery-intro .text-link {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .discovery-title h3 {
+    font-size: 11px;
+  }
+  .editorial-dark {
+    grid-template-columns: 1fr;
+  }
+  .editorial-dark .editorial-visual {
+    height: 255px;
+  }
+  .ambition-collage {
+    padding: 0 30px 35px;
+    gap: 15px;
+  }
+  .ambition-slab {
+    border-radius: 3px;
+  }
+  .slab-photo {
+    margin: 0;
+  }
+  .ambition-benefits {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .manifesto-inner {
+    gap: 30px;
+  }
+  .manifesto-mark {
+    font-size: 110px;
+    letter-spacing: -15px;
+  }
+  .manifesto h2 {
+    font-size: 30px;
+  }
+}
+@media (max-width: 560px) {
+  .campaign-wrap {
+    padding-top: 16px;
+  }
+  .editorial-blue {
+    grid-template-columns: 1fr;
+  }
+  .editorial-copy {
+    padding: 30px 25px;
+  }
+  .editorial-copy h1 {
+    font-size: 46px;
+    line-height: 1.05;
+  }
+  .editorial-kicker {
+    font-size: 8px;
+    letter-spacing: 1.6px;
+    margin-bottom: 18px;
+  }
+  .editorial-copy > p {
+    font-size: 13px;
+    margin: 20px 0;
+  }
+  .editorial-blue .editorial-visual {
+    height: 270px;
+  }
+  .campaign-photo {
+    object-position: center 55%;
+  }
+  .campaign-stamp {
+    top: 18px;
+    left: 20px;
+    padding: 13px;
+  }
+  .campaign-stamp strong {
+    font-size: 21px;
+  }
+  .campaign-stamp svg {
+    width: 21px;
+    height: 21px;
+  }
+  .campaign-caption {
+    font-size: 7px;
+  }
+  .home-beliefs {
+    justify-content: flex-start;
+    gap: 13px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+  .discovery-section {
+    padding-top: 32px;
+  }
+  .discovery-intro {
+    display: block;
+  }
+  .discovery-intro h2 {
+    font-size: 29px;
+  }
+  .discovery-intro p {
+    font-size: 12px;
+    margin-bottom: 15px;
+  }
+  .discovery-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .discovery-card {
+    padding: 12px;
+  }
+  .discovery-title h3 {
+    font-size: 12px;
+  }
+  .discovery-card .course-art {
+    height: 120px;
+  }
+  .discovery-card > p {
+    font-size: 10px;
+    min-height: 30px;
+  }
+  .home-course-section {
+    padding-top: 35px;
+  }
+  .home-page .card-body h3 {
+    min-height: 0;
+    font-size: 18px;
+  }
+  .ambition-wrap {
+    padding-top: 35px;
+  }
+  .editorial-dark .editorial-copy {
+    padding: 30px 25px;
+  }
+  .editorial-dark h2 {
+    font-size: 34px;
+  }
+  .editorial-dark .editorial-kicker {
+    font-size: 8px;
+  }
+  .editorial-dark .editorial-visual {
+    height: 215px;
+  }
+  .ambition-collage {
+    gap: 8px;
+    padding: 0 20px 25px;
+  }
+  .ambition-slab b {
+    font-size: 6px;
+  }
+  .slab-blue > span {
+    font-size: 32px;
+  }
+  .slab-orange > span {
+    font-size: 14px;
+  }
+  .orbit-symbol {
+    width: 42px;
+    height: 65px;
+    border-width: 8px;
+  }
+  .orbit-symbol:after {
+    inset: -8px;
+    border-width: 8px;
+  }
+  .ambition-benefits {
+    padding: 18px;
+    flex-direction: column;
+    font-size: 10px;
+  }
+  .audience-section {
+    padding-top: 35px;
+    padding-bottom: 35px;
+  }
+  .audience-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .audience-card {
+    padding: 25px;
+  }
+  .audience-card h3 {
+    font-size: 25px;
+  }
+  .manifesto-inner {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding-top: 30px;
+    padding-bottom: 35px;
+  }
+  .manifesto-mark {
+    font-size: 100px;
+    line-height: 1.2;
+    text-align: left;
+  }
+  .manifesto h2 {
+    font-size: 31px;
+  }
+}
+
+@media (max-width: 560px) {
+  .campaign-stamp {
+    left: auto;
+    right: 15px;
+    top: auto;
+    bottom: 48px;
+    padding: 10px 13px;
+  }
+  .campaign-stamp strong {
+    font-size: 18px;
+  }
+  .campaign-stamp > span {
+    font-size: 7px;
+  }
+  .campaign-stamp svg {
+    width: 17px;
+    height: 17px;
+  }
+}
