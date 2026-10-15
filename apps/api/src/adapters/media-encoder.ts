@@ -9,8 +9,8 @@ import type { VideoEncoder } from '../application/video-processing';
 const run = promisify(execFile);
 export class MediaEncoder implements VideoEncoder {
   constructor(
-    private encoderPath = process.env.FFMPEG_PATH ?? ffmpeg ?? 'ffmpeg',
-    private probePath = process.env.FFPROBE_PATH ?? probe.path,
+    private encoderPath = ffmpeg ?? 'ffmpeg',
+    private probePath = probe.path,
   ) {}
   async encode(source: string, directory: string) {
     const inspected = await run(

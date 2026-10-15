@@ -16,13 +16,15 @@ Le front n’utilise pas de données pédagogiques locales en remplacement d’u
 | `apps/api/src/adapters/postgres` | Requêtes paramétrées, transactions et contrôle des écritures concurrentes     |
 | `apps/api/src/adapters/storage`  | Documents locaux, MinIO/S3 et WebDAV                                          |
 | `apps/api/src/adapters/security` | Mots de passe et jetons                                                       |
-| `apps/api/src/main.ts`           | Assemblage des dépendances et démarrage des traitements                       |
+| `apps/api/src/bootstrap.ts`      | Assemblage des dépendances et gestion de leur fermeture                       |
 | `packages/contracts/src`         | Schémas Zod et opérations HTTP partagés                                       |
 | `apps/web/src/application`       | Services, ports et coordination des sauvegardes                               |
 | `apps/web/src/adapters/http`     | Transport, validation des réponses et conversion vers les vues                |
 | `apps/web/src/ui`                | Pages et composants React                                                     |
 
 Un contrôleur HTTP ne contient pas les règles de publication ou de correction. Un composant React ne connaît ni les tables SQL, ni les clés du stockage.
+
+La configuration est validée dans `apps/api/src/config/environment.ts`, puis transmise aux adaptateurs. `main.ts` gère l’écoute et les signaux ; `bootstrap.ts` assemble les composants sans écouter automatiquement. Les scripts partagent un chargeur de configuration et une gestion des groupes de processus. Voir [le guide serveur](SERVER.md#fichiers-de-configuration).
 
 ## Domaines métier
 

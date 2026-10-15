@@ -9,7 +9,8 @@ RUN npm ci --omit=dev
 COPY apps/api ./apps/api
 COPY packages/contracts ./packages/contracts
 COPY db ./db
+COPY scripts ./scripts
 RUN mkdir -p /app/data/resources && chown -R node:node /app/data
 USER node
 EXPOSE 3083
-CMD ["npm", "run", "start", "--workspace", "@edutube/api"]
+CMD ["node", "--import", "tsx", "apps/api/src/main.ts"]

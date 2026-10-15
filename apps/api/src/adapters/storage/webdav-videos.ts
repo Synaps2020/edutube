@@ -54,7 +54,7 @@ export class WebdavVideos implements VideoStorage {
       await this.request(key, {
         method: 'PUT',
         headers: { 'Content-Length': String(size), 'Content-Type': mediaType },
-        body: source as unknown as BodyInit,
+        body: source as unknown as RequestInit['body'],
         duplex: 'half',
       })
     ).body?.cancel();

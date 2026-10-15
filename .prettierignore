@@ -1,0 +1,13 @@
+# Dépendances, données privées et sorties générées
+node_modules/
+**/dist/
+coverage/
+data/
+backups/
+.env*
+.idea/
+.vscode/
+
+# Ces fichiers sont produits par npm et le générateur de contrats.
+package-lock.json
+docs/openapi.json

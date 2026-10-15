@@ -19,10 +19,15 @@ export class MinioVideos implements VideoStorage {
       endpoint: options.endpoint,
       region: options.region,
       forcePathStyle: true,
+      maxAttempts: 3,
+      requestHandler: { connectionTimeout: 5000, socketTimeout: 60000 },
       credentials: { accessKeyId: options.accessKey, secretAccessKey: options.secretKey },
       requestChecksumCalculation: 'WHEN_REQUIRED',
       responseChecksumValidation: 'WHEN_REQUIRED',
     });
+  }
+  close() {
+    this.client.destroy();
   }
   async ready() {
     try {

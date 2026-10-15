@@ -1,5 +1,30 @@
 name: edutube
+
+# Les paramètres PostgreSQL séparés évitent d’insérer le mot de passe brut dans une URL.
+x-database: &database
+  PGHOST: postgres
+  PGPORT: 5432
+  PGDATABASE: edutube
+  PGUSER: edutube
+  PGPASSWORD: ${DB_PASSWORD:-edutube-local}
+
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: edutube
+      POSTGRES_USER: edutube
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-edutube-local}
+    ports:
+      - '127.0.0.1:${DB_PORT:-5434}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U edutube -d edutube']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
   minio:
     image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
     command: server /data --console-address :9001
@@ -16,6 +41,7 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
+
   mailpit:
     image: axllent/mailpit:v1.29
     ports:
@@ -25,22 +51,10 @@ services:
       - mail_data:/data
     environment:
       MP_DATABASE: /data/mailpit.db
-  postgres:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_DB: edutube
-      POSTGRES_USER: edutube
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-edutube-local}
-    ports:
-      - '127.0.0.1:${DB_PORT:-5434}:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U edutube -d edutube']
-      interval: 3s
-      timeout: 3s
-      retries: 20
+
+  # Ces outils s’exécutent explicitement avec Make, jamais au redémarrage de Node.
   migrate:
+    profiles: ['tools']
     image: redgate/flyway:13.6.0
     platform: linux/amd64
     command: migrate
@@ -53,30 +67,35 @@ services:
       FLYWAY_CLEAN_DISABLED: 'true'
     volumes:
       - ./db/migrations:/migrations:ro
-    depends_on:
-      postgres:
-        condition: service_healthy
+
   seed:
+    profiles: ['tools']
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    command: ['npm', 'run', 'seed', '--workspace', '@edutube/api']
-    environment:
-      DATABASE_URL: postgresql://edutube:${DB_PASSWORD:-edutube-local}@postgres:5432/edutube
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
+    command: ['node', '--import', 'tsx', 'apps/api/scripts/seed.ts']
+    environment: *database
+
   api:
-    user: '${APP_UID:-1000}:${APP_GID:-1000}'
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    user: '${APP_UID:-1000}:${APP_GID:-1000}'
+    init: true
+    # Supérieur au délai maximal de fermeture autorisé par Node (120 secondes).
+    stop_grace_period: 130s
+    restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://edutube:${DB_PASSWORD:-edutube-local}@postgres:5432/edutube
+      <<: *database
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:${PORT:-3082}}
       API_HOST: 0.0.0.0
       API_PORT: 3083
       NODE_ENV: production
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+      DB_CONNECT_TIMEOUT_MS: ${DB_CONNECT_TIMEOUT_MS:-5000}
+      DB_QUERY_TIMEOUT_MS: ${DB_QUERY_TIMEOUT_MS:-10000}
+      SHUTDOWN_TIMEOUT_MS: ${SHUTDOWN_TIMEOUT_MS:-30000}
       STORAGE_DIR: /app/data/resources
       FFMPEG_PATH: /usr/bin/ffmpeg
       FFPROBE_PATH: /usr/bin/ffprobe
@@ -85,6 +104,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-edutube-local}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-edutube-local-secret}
       MINIO_BUCKET: ${MINIO_BUCKET:-edutube-videos}
+      MINIO_REGION: ${MINIO_REGION:-us-east-1}
       WEBDAV_URL: ${WEBDAV_URL:-}
       WEBDAV_TOKEN: ${WEBDAV_TOKEN:-}
       WEBDAV_USER: ${WEBDAV_USER:-}
@@ -96,36 +116,43 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_REQUIRE_TLS: ${SMTP_REQUIRE_TLS:-false}
     volumes:
-      - ./data/resources:/app/data/resources
+      - type: bind
+        source: ${STORAGE_DIR:-./data/resources}
+        target: /app/data/resources
     ports:
-      - '127.0.0.1:3083:3083'
+      - '127.0.0.1:${API_PORT:-3083}:3083'
     depends_on:
+      postgres:
+        condition: service_healthy
       minio:
         condition: service_healthy
       mailpit:
         condition: service_started
-      seed:
-        condition: service_completed_successfully
     healthcheck:
       test:
         [
           'CMD',
           'node',
           '-e',
-          "fetch('http://127.0.0.1:3083/health').then(response=>process.exit(response.ok?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://127.0.0.1:3083/health', {signal: AbortSignal.timeout(2000)}).then(response=>process.exit(response.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 5s
       timeout: 3s
       retries: 20
+
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    init: true
+    restart: unless-stopped
     ports:
       - '${HOST:-127.0.0.1}:${PORT:-3082}:8080'
     depends_on:
       api:
         condition: service_healthy
-    restart: unless-stopped
+
 volumes:
+  postgres_data:
   minio_data:
   mail_data:
-  postgres_data:

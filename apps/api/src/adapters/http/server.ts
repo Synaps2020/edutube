@@ -16,7 +16,11 @@ import {
   tokenInputSchema,
   resetInputSchema,
 } from '@edutube/contracts/identity';
-import Fastify, { type FastifyRequest, type FastifyReply } from 'fastify';
+import Fastify, {
+  type FastifyRequest,
+  type FastifyReply,
+  type FastifyServerOptions,
+} from 'fastify';
 import multipart from '@fastify/multipart';
 import { resourceRoutes } from './resource-routes';
 import type { Resources } from '../../application/resources';
@@ -60,7 +64,7 @@ interface ServerOptions {
   origin: string;
   secureCookie: boolean;
   ready: () => Promise<void>;
-  logger?: boolean;
+  logger?: FastifyServerOptions['logger'];
 }
 function sessionView(session: Session) {
   return sessionSchema.parse({

@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/main.ts",
-    "start": "tsx src/main.ts",
+    "dev": "node ../../scripts/project.mjs run node --import tsx --watch apps/api/src/main.ts",
+    "start": "node ../../scripts/project.mjs run node --import tsx apps/api/src/main.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit",
     "test": "vitest run",

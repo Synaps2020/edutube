@@ -1,15 +1,15 @@
-import { copyFileSync, existsSync, mkdirSync, constants } from 'node:fs';
-import { spawn, spawnSync } from 'node:child_process';
-import { loadEnvFile } from 'node:process';
-import { fileURLToPath } from 'node:url';
+import { copyFileSync, mkdirSync, chmodSync, constants } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { loadEnvironment, projectDirectory } from './environment.mjs';
+import { startProcess, stopProcess } from './processes.mjs';
 
-const directory = fileURLToPath(new URL('../', import.meta.url));
-process.chdir(directory);
+process.chdir(projectDirectory);
 const [action, command, ...argumentsList] = process.argv.slice(2);
 
 if (action === 'config') {
   try {
     copyFileSync('.env.example', '.env', constants.COPYFILE_EXCL);
+    chmodSync('.env', 0o600);
     console.log('Configuration créée dans .env.');
   } catch (error) {
     if (error.code !== 'EEXIST') {
@@ -17,27 +17,18 @@ if (action === 'config') {
     }
     console.log('Configuration .env conservée.');
   }
-  mkdirSync('data/resources', { recursive: true, mode: 0o700 });
+  const environment = loadEnvironment();
+  mkdirSync(environment.STORAGE_DIR ?? 'data/resources', { recursive: true, mode: 0o700 });
 } else {
-  if (existsSync('.env')) {
-    loadEnvFile('.env');
-  }
-  const environment = {
-    ...process.env,
-    HOST: process.env.HOST ?? '127.0.0.1',
-    PORT: process.env.PORT ?? '3082',
-    API_PORT: process.env.API_PORT ?? '3083',
-    DATABASE_URL:
-      process.env.DATABASE_URL ??
-      `postgresql://edutube:${encodeURIComponent(process.env.DB_PASSWORD ?? 'edutube-local')}@127.0.0.1:${process.env.DB_PORT ?? '5434'}/edutube`,
-    WEB_ORIGIN: process.env.WEB_ORIGIN ?? `http://localhost:${process.env.PORT ?? '3082'}`,
-    MINIO_ENDPOINT:
-      process.env.MINIO_ENDPOINT ?? `http://127.0.0.1:${process.env.MINIO_PORT ?? '9040'}`,
-  };
-  environment.TEST_ORIGIN ??= environment.WEB_ORIGIN;
+  const environment = loadEnvironment();
   if (action === 'doctor') {
     const [major, minor] = process.versions.node.split('.').map(Number);
-    if (major < 20 || (major === 20 && minor < 19) || (major === 22 && minor < 12)) {
+    if (
+      major < 20 ||
+      major === 21 ||
+      (major === 20 && minor < 19) ||
+      (major === 22 && minor < 12)
+    ) {
       throw new Error('Node.js 20.19+, 22.12+ ou une version ultérieure est nécessaire.');
     }
     console.log(`Node.js ${process.versions.node} : OK`);
@@ -57,9 +48,9 @@ if (action === 'config') {
       console.log(`${program} ${args.join(' ')} : OK`);
     }
   } else if (action === 'run' && command) {
-    const child = spawn(command, argumentsList, { env: environment, stdio: 'inherit' });
+    const child = startProcess(command, argumentsList, { env: environment });
     for (const signal of ['SIGINT', 'SIGTERM']) {
-      process.on(signal, () => child.kill(signal));
+      process.once(signal, () => stopProcess(child, signal));
     }
     child.on('error', (error) => {
       console.error(`Impossible de lancer ${command} : ${error.message}`);

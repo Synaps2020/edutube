@@ -16,7 +16,7 @@ ifneq ($(origin API_PORT),undefined)
 export API_PORT
 endif
 
-.PHONY: help config doctor install setup start dev services db-up migrate migrate-check seed demo videos-demo status logs stop docker-up docker-down docker-build build preview typecheck test integration verify-runtime lint format check api-spec account-role course-owner
+.PHONY: help config doctor install setup start dev services db-up migrate migrate-check seed demo videos-demo status logs stop docker-up docker-down docker-build build typecheck test integration verify-runtime lint format check api-spec account-role course-owner
 
 help: ## Afficher les commandes disponibles
 	@awk 'BEGIN {FS = ":.*## "; print "EduTube — commandes disponibles\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -45,16 +45,15 @@ dev: config ## Démarrer les services puis React et Node, dépendances déjà in
 services: config ## Démarrer PostgreSQL, MinIO et Mailpit
 	$(RUN) docker compose up -d --wait postgres minio mailpit
 
-db-up: migrate ## Préparer la base et charger le catalogue d’exemple
-	$(MAKE) seed
+db-up: seed ## Préparer la base et charger le catalogue d’exemple
 
 migrate: services ## Appliquer les migrations Flyway
-	$(RUN) docker compose run --rm migrate
+	$(RUN) docker compose run --no-deps --rm migrate
 
 migrate-check: services ## Valider les migrations déjà appliquées
-	$(RUN) docker compose run --rm migrate validate
+	$(RUN) docker compose run --no-deps --rm migrate validate
 
-seed: ## Charger le catalogue sans écraser les données existantes
+seed: migrate ## Charger le catalogue sans écraser les données existantes
 	$(RUN) docker compose run --no-deps --build --rm seed
 
 demo: ## Créer les six comptes de test et leurs données sans les réinitialiser
@@ -73,7 +72,8 @@ stop: ## Arrêter les services Docker sans effacer leurs données
 	$(RUN) docker compose stop
 
 docker-up: config ## Construire et démarrer tout le projet dans Docker
-	APP_UID=$$(id -u) APP_GID=$$(id -g) $(RUN) docker compose up --build -d --wait
+	$(MAKE) db-up
+	APP_UID=$$(id -u) APP_GID=$$(id -g) $(RUN) docker compose up --build -d --wait api web
 
 docker-down: ## Retirer les conteneurs Docker en conservant les données
 	$(RUN) docker compose down
@@ -83,10 +83,6 @@ docker-build: ## Construire les images du front et du serveur
 
 build: ## Vérifier Node et compiler React
 	$(RUN) $(NPM) run build
-
-preview: ## Servir le front compilé sur 4082 ; démarrer Node séparément
-	$(MAKE) build
-	$(RUN) $(NPM) run preview --workspace @edutube/web -- --host 127.0.0.1 --port 4082 --strictPort
 
 typecheck: ## Vérifier les types TypeScript
 	$(RUN) $(NPM) run typecheck

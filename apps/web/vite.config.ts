@@ -14,5 +14,11 @@ export default defineConfig({
       },
     },
   },
-  server: { proxy: { '/api': `http://127.0.0.1:${process.env.API_PORT ?? '3083'}` } },
+  server: {
+    proxy: {
+      '/api': new URL(
+        process.env.API_URL ?? `http://127.0.0.1:${process.env.API_PORT ?? '3083'}/api/v1`,
+      ).origin,
+    },
+  },
 });

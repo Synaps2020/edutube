@@ -11,6 +11,9 @@ function fixture(context) {
   mkdirSync(join(directory, 'scripts'));
   const script = join(directory, 'scripts/project.mjs');
   copyFileSync(new URL('./project.mjs', import.meta.url), script);
+  for (const name of ['environment.mjs', 'processes.mjs']) {
+    copyFileSync(new URL(name, import.meta.url), join(directory, 'scripts', name));
+  }
   const environment = { ...process.env };
   for (const name of [
     'DATABASE_URL',
@@ -19,11 +22,18 @@ function fixture(context) {
     'HOST',
     'PORT',
     'API_PORT',
+    'API_HOST',
+    'API_URL',
     'WEB_ORIGIN',
     'MINIO_ENDPOINT',
     'MINIO_PORT',
     'TEST_ORIGIN',
     'SMTP_FROM',
+    'PGHOST',
+    'PGPORT',
+    'PGDATABASE',
+    'PGUSER',
+    'PGPASSWORD',
   ]) {
     delete environment[name];
   }

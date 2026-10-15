@@ -9,6 +9,8 @@ Plateforme d’apprentissage : interface React, serveur Node, PostgreSQL et stoc
 - Docker avec **Compose v2**, démarré.
 - Make : macOS ou Linux ; sous Windows, utiliser **WSL2** avec Docker Desktop intégré.
 
+La version recommandée est indiquée dans `.nvmrc` (`nvm use` si vous utilisez nvm).
+
 Le premier lancement nécessite Internet pour les dépendances et les images Docker. Toutes les commandes ci-dessous se lancent à la racine du dépôt.
 
 ## Installer et démarrer
@@ -101,7 +103,7 @@ Utiliser le mot de passe actuel si les comptes ont été modifiés. Les connexio
 
 ## Configuration
 
-Modifier **`.env`**, puis redémarrer le projet. Toutes les commandes Make le chargent. Les variables du terminal priment sur ce fichier. Pour changer temporairement le port du front :
+Modifier **`.env`**, puis redémarrer le projet. Les commandes Make et `npm run dev` le chargent par les mêmes règles. Node valide ses paramètres au démarrage et nomme les réglages invalides sans afficher les secrets. Les variables du terminal priment sur ce fichier. Pour changer temporairement le port du front :
 
 ```sh
 make dev PORT=3100
@@ -125,7 +127,7 @@ make demo
 
 `make demo` nécessite les dépendances npm : lancer `make install` si elles ne sont pas présentes. Les comptes de démonstration sont facultatifs dans ce mode ; le catalogue est chargé automatiquement. `make videos-demo` utilise aussi les dépendances locales.
 
-`make docker-up` construit les images, applique Flyway, charge le catalogue puis démarre Node et le front Nginx. `make docker-down` retire les conteneurs sans supprimer les volumes. Les identifiants de stockage et les adresses internes des conteneurs sont gérés par Compose.
+`make docker-up` applique Flyway, charge le catalogue, construit les images puis démarre Node et le front Nginx. Les migrations ne sont pas rejouées lors d’un simple redémarrage de Node. Les deux images sont définies dans `apps/api/Dockerfile` et `apps/web/Dockerfile`. `make docker-down` retire les conteneurs sans supprimer les volumes. Les identifiants de stockage et les adresses internes des conteneurs sont gérés par Compose. Ce mode reste destiné au développement local ; un hébergement public nécessite sa propre configuration d’exploitation.
 
 ## Organisation du code
 
@@ -140,6 +142,8 @@ db/fixtures/          Catalogue d’exemple
 scripts/              Lancement et vérification du projet
 infra/                Proxy Nginx
 ```
+
+Les consignes communes et garde-fous des agents sont dans `AGENTS.md` ; `CLAUDE.md` y renvoie.
 
 Les commentaires sont en français. Les noms sont explicites et courts. ESLint, TypeScript et Prettier contrôlent la qualité du code ; `make format` applique le formatage.
 

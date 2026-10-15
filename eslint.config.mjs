@@ -39,7 +39,6 @@ export default tseslint.config(
       'scripts/**/*.mjs',
       'packages/contracts/**/*.ts',
     ],
-    languageOptions: { globals: { ...globals.browser, ...globals.node } },
     plugins: { projet: projectRules },
     rules: {
       'projet/commentaires-francais': 'error',
@@ -59,7 +58,17 @@ export default tseslint.config(
     },
   },
   {
+    files: [
+      'apps/api/**/*.ts',
+      'scripts/**/*.mjs',
+      'packages/contracts/scripts/**/*.ts',
+      'apps/web/vite.config.ts',
+    ],
+    languageOptions: { globals: globals.node },
+  },
+  {
     files: ['apps/web/src/**/*.{ts,tsx}'],
+    languageOptions: { globals: globals.browser },
     plugins: { 'react-hooks': reactHooks },
     rules: {
       'react-hooks/rules-of-hooks': 'error',

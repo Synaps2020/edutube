@@ -1,12 +1,20 @@
-node_modules
-.next
-.env
-data/
-backups/
-nginx/certs/*
-!nginx/certs/README.md
-*.log
-
+# Dépendances et fichiers générés
+node_modules/
 dist/
 coverage/
 *.tsbuildinfo
+*.log
+
+# Configuration privée, données et sauvegardes
+.env
+.env.*
+!.env.example
+data/
+backups/
+*.pem
+*.key
+
+# Réglages propres à la machine
+.idea/
+.vscode/
+.DS_Store

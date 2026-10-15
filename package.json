@@ -12,19 +12,18 @@
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present && npm run test:scripts",
-    "format": "prettier --write eslint.config.mjs apps/web/src packages/contracts/src packages/contracts/scripts apps/web/vite.config.ts docs/ARCHITECTURE.md docs/API-DESIGN.md README.md .prettierrc.json docker-compose.yml apps/api/src apps/api/scripts apps/api/test scripts docs/SERVER.md docs/VIDEO.md",
-    "format:check": "prettier --check eslint.config.mjs apps/web/src packages/contracts/src packages/contracts/scripts apps/web/vite.config.ts docs/ARCHITECTURE.md docs/API-DESIGN.md README.md .prettierrc.json docker-compose.yml apps/api/src apps/api/scripts apps/api/test scripts docs/SERVER.md docs/VIDEO.md",
-    "preview": "npm run preview --workspace @edutube/web --",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "api:spec": "npm run openapi --workspace @edutube/contracts",
     "lint": "eslint apps/web apps/api packages/contracts scripts --max-warnings 0",
     "lint:fix": "npm run lint -- --fix",
     "verify:runtime": "node scripts/verify-runtime.mjs",
     "test:integration": "npm run test:integration --workspace @edutube/api",
     "test:unit": "npm run test:unit --workspace @edutube/api && npm run test --workspace @edutube/web && npm run test:scripts",
-    "test:scripts": "node --test scripts/project.test.mjs"
+    "test:scripts": "node --test scripts/*.test.mjs"
   },
   "engines": {
-    "node": ">=20.19"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

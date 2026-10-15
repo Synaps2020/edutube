@@ -68,7 +68,7 @@ for (const [index, name] of names.entries()) {
   }
 }
 const origin = process.env.WEB_ORIGIN ?? 'http://localhost:3082';
-const base = process.env.API_URL ?? 'http://127.0.0.1:3083/api/v1';
+const base = process.env.API_URL ?? `http://127.0.0.1:${process.env.API_PORT ?? '3083'}/api/v1`;
 async function login(email: string) {
   const response = await fetch(base + '/auth/login', {
     method: 'POST',

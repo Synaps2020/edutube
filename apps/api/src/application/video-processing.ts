@@ -86,14 +86,17 @@ export function startVideoProcessing(
       if (heartbeat) {
         clearInterval(heartbeat);
       }
-      if (directory) {
-        await rm(directory, { recursive: true, force: true });
+      try {
+        if (directory) {
+          await rm(directory, { recursive: true, force: true });
+        }
+      } finally {
+        running = false;
       }
-      running = false;
     }
   };
   const timer = setInterval(() => {
-    void process();
+    void process().catch(report);
   }, 2000);
   timer.unref();
   return async () => {
